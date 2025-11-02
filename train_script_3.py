@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Training script for GPT model based on test_chat.ipynb
-"""
-
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -16,6 +11,8 @@ from torch.amp.grad_scaler import GradScaler
 from tqdm import tqdm
 
 from datasets import load_dataset
+from components.model import GPTModel
+from components.dataset import TextDataset
 
 # Load dataset
 dataset = load_dataset("starhopp3r/TinyChat")
@@ -55,36 +52,6 @@ print(encode("[INST] Hello, world! [/INST]"))
 print(decode(encode("[INST] Hello, world! [/INST]")))
 
 
-class TextDataset(Dataset):
-    def __init__(self, hf_dataset, block_size):
-        self.dataset = hf_dataset
-        # self.tokenizer = tokenizer
-        self.block_size = block_size
-
-    def __len__(self):
-        return len(self.dataset["train"])
-
-    def __getitem__(self, idx):
-        # Start with a random index sample
-        rand_idx = torch.randint(0, len(self.dataset["train"]), (1,)).item()
-        text = self.dataset["train"][rand_idx]["text"]
-        tokens = encode(text)
-
-        # Keep appending more samples if too short
-        while len(tokens) < self.block_size + 1:
-            next_idx = torch.randint(0, len(self.dataset["train"]), (1,)).item()
-            next_text = self.dataset["train"][next_idx]["text"]
-            tokens.extend(encode(" " + next_text))
-            # Prevent runaway growth
-            if len(tokens) > self.block_size * 2:
-                break
-
-        # Truncate to block_size + 1
-        tokens = torch.tensor(tokens[: self.block_size + 1])
-
-        x = tokens[: self.block_size]
-        y = tokens[1 : self.block_size + 1]
-        return x.long(), y.long()
 
 
 # hyperparameters
@@ -105,41 +72,6 @@ train_dataloader = DataLoader(
     train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=16
 )
 
-
-class GPTModel(nn.Module):
-    def __init__(
-        self, vocab_size, n_embedding, n_layers, n_heads, dropout_p, block_size
-    ):
-        super(GPTModel, self).__init__()
-        self.token_embedding = nn.Embedding(vocab_size, n_embedding)
-        self.position_embedding = nn.Embedding(block_size, n_embedding)
-        self.layers = nn.ModuleList(
-            [
-                nn.TransformerEncoderLayer(
-                    d_model=n_embedding, nhead=n_heads, dropout=dropout_p
-                )
-                for _ in range(n_layers)
-            ]
-        )
-        self.ln_f = nn.LayerNorm(n_embedding)
-        self.head = nn.Linear(n_embedding, vocab_size)
-        self.dropout = nn.Dropout(dropout_p)
-        self.block_size = block_size
-
-    def forward(self, x):
-        bsz, seq_len = x.size()
-        positions = (
-            torch.arange(0, seq_len, device=x.device).unsqueeze(0).expand(bsz, seq_len)
-        )
-        x = self.token_embedding(x) + self.position_embedding(positions)
-        x = self.dropout(x)
-
-        for layer in self.layers:
-            x = layer(x)
-
-        x = self.ln_f(x)
-        logits = self.head(x)
-        return logits
 
 
 # define objects
