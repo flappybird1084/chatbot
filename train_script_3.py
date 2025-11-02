@@ -52,26 +52,23 @@ print(encode("[INST] Hello, world! [/INST]"))
 print(decode(encode("[INST] Hello, world! [/INST]")))
 
 
-
-
 # hyperparameters
 train_model = True
 periodic_outputs = False
 block_size = 128
-n_layers = 8
+n_layers = 16
 n_heads = 8
 dropout_p = 0.1
 batch_size = 64
 learning_rate = 3e-4
-n_embedding = 128
-max_iters = 500000
+n_embedding = 256
+max_iters = 10000
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 train_dataset = TextDataset(dataset, block_size=block_size)
 train_dataloader = DataLoader(
     train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=16
 )
-
 
 
 # define objects
