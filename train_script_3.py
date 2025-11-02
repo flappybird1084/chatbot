@@ -62,7 +62,7 @@ dropout_p = 0.1
 batch_size = 64
 learning_rate = 3e-4
 n_embedding = 256
-max_iters = 10000
+max_iters = 400000
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 train_dataset = TextDataset(dataset, block_size=block_size)

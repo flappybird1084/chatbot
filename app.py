@@ -19,9 +19,12 @@ n_embedding = 256
 
 # initialize model and load weights
 vocab_size = tokenizer.n_vocab
-model = GPTModel(vocab_size, n_embedding, n_layers, n_heads, dropout_p, block_size).to(device)
+model = GPTModel(vocab_size, n_embedding, n_layers, n_heads, dropout_p, block_size).to(
+    device
+)
 model.load_state_dict(torch.load("checkpoints/gpt_model-1.pth", map_location=device))
 model.eval()
+
 
 # -----------------------------
 # Generation function
@@ -32,7 +35,9 @@ def generate_text(prompt, max_new_tokens=200, temperature=1.0, top_k=50):
 
     # Wrap message in [INST] and [/INST]
     wrapped_prompt = f"[INST] {prompt.strip()} [/INST]"
-    tokens = torch.tensor(encode(wrapped_prompt), dtype=torch.long).unsqueeze(0).to(device)
+    tokens = (
+        torch.tensor(encode(wrapped_prompt), dtype=torch.long).unsqueeze(0).to(device)
+    )
 
     inst_token_id = encode("[INST]")[0]
 
@@ -54,7 +59,8 @@ def generate_text(prompt, max_new_tokens=200, temperature=1.0, top_k=50):
 
         tokens = torch.cat((tokens, next_token), dim=1)
 
-    return decode(tokens[0].tolist())[len(wrapped_prompt):]
+    return decode(tokens[0].tolist())[len(wrapped_prompt) :]
+
 
 # -----------------------------
 # Gradio UI
@@ -65,11 +71,13 @@ def chat(prompt, max_tokens, temperature, top_k):
 
 
 with gr.Blocks(title="TinyChat GPT Model") as demo:
-    gr.Markdown("## 💬 TinyChat GPT Text Generator")
+    gr.Markdown("## cute lil chatbot")
 
     with gr.Row():
         with gr.Column(scale=2):
-            prompt = gr.Textbox(label="Prompt", placeholder="Type your message here...", lines=4)
+            prompt = gr.Textbox(
+                label="Prompt", placeholder="Type your message here...", lines=4
+            )
             max_tokens = gr.Slider(10, 500, value=200, step=10, label="Max New Tokens")
             temperature = gr.Slider(0.2, 1.5, value=1.0, step=0.1, label="Temperature")
             top_k = gr.Slider(10, 200, value=50, step=10, label="Top‑K Sampling")
@@ -84,4 +92,4 @@ with gr.Blocks(title="TinyChat GPT Model") as demo:
 # Launch app
 # -----------------------------
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
