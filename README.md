@@ -86,7 +86,6 @@ This will make the model generate another response following the previous exchan
 - gradio>=5.49.1
 - accelerate>=1.11.0
 - trl>=0.24.0
-- ollama>=0.6.0
 
 ## Demo
 
